@@ -39,7 +39,7 @@ entry1 = tk.Entry(root, font=entry_font)
 entry2 = tk.Entry(root, font=entry_font)
 
 # Botón de acción
-button = tk.Button(root, text="Procesar", command=on_button_click)
+button = tk.Button(root, text="Conectar", command=on_button_click)
 
 # Selector de archivos y botón
 file_button = tk.Button(root, text="Seleccionar archivo", command=on_file_button_click)
