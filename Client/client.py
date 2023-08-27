@@ -22,6 +22,12 @@ class Client:
     def send_msg(self, message):
         self.client_socket.send(message.encode())
 
+    def set_IP(self, ip):
+        self.server_ip = ip
+
+    def set_PORT(self, port):
+        self.server_port = port
+
     def server_response(self):
         data = self.client_socket.recv(1024)
         return data.decode()
