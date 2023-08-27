@@ -27,7 +27,6 @@ def on_file_button_click():
         send_image(file_path)
         time.sleep(2)
         print(_client.server_response())
-        _client.disconnect()
 
 
 # Botón de conectar
@@ -87,15 +86,34 @@ def send_image(path):
     # Obtiene las dimensiones de la imagen
     width, height = image.size
 
+    # Envia el tamano de la imagen
     message = "start," + str(width) + "," + str(height)
-    print(message)
     _client.send_msg(message)
+    time.sleep(3)
+
+    pixel_string = "pixels,"
+
     # Accede a los valores de los pixeles
     for y in range(height):
         for x in range(width):
             pixel = pixeles[x, y]
+            if len(pixel_string) < 200:
+                pixel_string += (
+                    str(pixel[0]) + "," + str(pixel[1]) + "," + str(pixel[2]) + ","
+                )
+            elif (y == height-1 and x == width-1):
+                pixel_string = pixel_string[:-1]
+                _client.send_msg(pixel_string)
+                pixel_string = "pixels,"
+            else:
+                pixel_string = pixel_string[:-1]
+                _client.send_msg(pixel_string)
+                pixel_string = "pixels,"
+                time.sleep(1)
             # Aquí puedes hacer lo que quieras con el valor del pixel, por ejemplo, imprimirlo
             # print(f"Pixel en ({x}, {y}): {pixel}")
+    time.sleep(1)
+    _client.send_msg("end")
 
 
 def main():

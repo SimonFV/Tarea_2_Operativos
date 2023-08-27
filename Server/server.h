@@ -14,13 +14,13 @@
 #include <ctype.h>
 #include "client.h"
 
-void handleMessage(char *msg, int sock);
+void handleMessage(char *msg, int sock, int client);
 int read_config();
 void init_server(int PORT);
 void run();
 void *connection_handler(void *);
 void send_to_all(char *message);
-void send_to(char *message, int *client);
+void send_to(char *message, int *sock);
 void set_client(int *sock);
 
 #endif // SERVER_SERVER_H

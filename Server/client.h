@@ -3,7 +3,10 @@
 
 struct client
 {
-    int* sock;
+    int *sock;
+    int width, height;
+    int *image;
+    int index;
 };
 
-#endif //SERVER_CLIENT_H
+#endif // SERVER_CLIENT_H

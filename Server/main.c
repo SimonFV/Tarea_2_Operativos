@@ -11,8 +11,6 @@ int matrix_length;
 int PORT;
 char DirColores[2048], DirHist[2048], DirLog[2048];
 
-void *run_server(void *h);
-
 int read_config()
 {
     FILE *file_ptr;

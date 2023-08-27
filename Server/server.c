@@ -7,9 +7,7 @@ extern struct client *clients_arr[4];
 extern int current_client;
 extern int matrix_length;
 
-#define MSG_SIZE 2048
-
-int receiving = 0;
+#define MSG_SIZE 256
 
 // Metodo que inicializa todo el servidor
 void init_server(int PORT)
@@ -85,6 +83,8 @@ void *connection_handler(void *socket_desc)
     int read_size;
     char message[50], client_message[MSG_SIZE];
 
+    int this_client = current_client;
+
     set_client(&sock);
     sprintf(message, "Connected!\n");
     write(sock, message, strlen(message));
@@ -95,7 +95,7 @@ void *connection_handler(void *socket_desc)
         // Analizar mensaje
         if (client_message != "")
         {
-            handleMessage(client_message, sock);
+            handleMessage(client_message, sock, this_client);
         }
 
         bzero(client_message, MSG_SIZE);
@@ -104,6 +104,7 @@ void *connection_handler(void *socket_desc)
     if (read_size == 0)
     {
         puts("Cliente desconectado");
+        free(clients_arr[this_client]->image);
         fflush(stdout);
     }
     else if (read_size == -1)
@@ -113,25 +114,45 @@ void *connection_handler(void *socket_desc)
 }
 
 // Analiza los mensajes entrantes del cliente
-void handleMessage(char *msg, int sock)
+void handleMessage(char *msg, int sock, int client)
 {
-    printf("%s\n", msg);
-
     char buf[MSG_SIZE];
     strcpy(buf, msg);
 
     int i = 0;
-    char *key = strtok(buf, ",");
+    char *value = strtok(buf, ",");
 
-    if (strcmp(key, "start") == 0)
+    if (strcmp(value, "start") == 0)
     {
-        char *width = strtok(NULL, ",");
-        char *height = strtok(NULL, ",");
+        int width = atoi(strtok(NULL, ","));
+        int height = atoi(strtok(NULL, ","));
 
-        printf("%s\n", width);
-        printf("%s\n", height);
+        printf("%i\n", width);
+        printf("%i\n", height);
 
-        send_to("Data received", &sock);
+        clients_arr[client]->width = width;
+        clients_arr[client]->height = height;
+
+        int size = width * height * 3;
+        clients_arr[client]->image = (int *)malloc(size * sizeof(int));
+        clients_arr[client]->index = 0;
+
+        send_to("Size received", &sock);
+    }
+    else if (strcmp(value, "pixels") == 0)
+    {
+        value = strtok(NULL, ",");
+        while (value != NULL)
+        {
+            clients_arr[client]->image[clients_arr[client]->index++] = atoi(value);
+            value = strtok(NULL, ",");
+        }
+    }
+    else if (strcmp(value, "end") == 0)
+    {
+        send_to("Image received", &sock);
+        // hacer algo
+        free(clients_arr[client]->image);
     }
 }
 
@@ -145,9 +166,9 @@ void send_to_all(char *message)
     }
 }
 
-void send_to(char *message, int *client)
+void send_to(char *message, int *sock)
 {
-    write(*client, message, strlen(message));
+    write(*sock, message, strlen(message));
 }
 
 // Se incluye el nuevo cliente a la lista de clientes
