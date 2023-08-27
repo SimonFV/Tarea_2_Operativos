@@ -46,7 +46,6 @@ void init_server(int PORT)
     c = sizeof(struct sockaddr_in);
 
     puts("Esperando conexiones entrantes...");
-    c = sizeof(struct sockaddr_in);
 }
 
 // Metodo para manejar al servidor en un thread
@@ -75,6 +74,8 @@ void run()
         perror("Aceptacion fallida");
         return;
     }
+
+    pthread_join(thread_id, NULL);
 }
 
 // Maneja cada conexion individualmente

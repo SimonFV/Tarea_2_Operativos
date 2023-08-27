@@ -67,22 +67,10 @@ int main()
     if (result == -1)
         return 0;
 
-    pthread_t thread_id;
-    char b[100];
-
     // Se inicializa el server
     init_server(PORT);
 
-    // Se crea un thread para manejar al servidor por aparte
-    pthread_create(&thread_id, NULL, run_server, NULL);
-
-    pthread_join(thread_id, NULL);
+    run();
 
     return 0;
-}
-
-// Metodo para correr el servidor en un thread
-void *run_server(void *h)
-{
-    run();
 }

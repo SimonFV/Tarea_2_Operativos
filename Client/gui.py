@@ -6,10 +6,11 @@ from tkinter import filedialog
 
 
 root = tk.Tk()
-entry_font = ("Helvetica", 20)  
+entry_font = ("Helvetica", 20)
 entry1 = tk.Entry(root, font=entry_font)
 entry2 = tk.Entry(root, font=entry_font)
 _client = None
+
 
 def on_button_click():
     port = entry1.get()
@@ -18,6 +19,7 @@ def on_button_click():
     _client = client.Client(ip, port)
     _client.connect()
 
+
 def on_file_button_click():
     file_path = filedialog.askopenfilename()
     if file_path:
@@ -25,17 +27,20 @@ def on_file_button_click():
         time.sleep(2)
         print(_client.server_response())
         _client.disconnect()
-        
+
+
 # Botón de conectar
 button = tk.Button(root, text="Conectar", command=on_button_click, state=tk.DISABLED)
+
+
 def validate_entries():
     if entry1.get() and entry2.get():
         button.config(state=tk.NORMAL)  # Activar el botón
     else:
         button.config(state=tk.DISABLED)  # Desactivar el botón
 
+
 def init_GUI():
-    
     root.title("Interfaz")
     root.configure(bg="black")
 
@@ -49,16 +54,17 @@ def init_GUI():
     root.geometry(f"{window_width}x{window_height}+{x_coordinate}+{y_coordinate}")
 
     # Etiquetas con fuentes más grandes
-    label_font = ("Helvetica", 20, "bold")  
+    label_font = ("Helvetica", 20, "bold")
     label_port = tk.Label(root, text="PORT", fg="white", bg="black", font=label_font)
     label_ip = tk.Label(root, text="IP", fg="white", bg="black", font=label_font)
 
     entry1.bind("<KeyRelease>", lambda event: validate_entries())
     entry2.bind("<KeyRelease>", lambda event: validate_entries())
-    
 
     # Selector de archivos y botón
-    file_button = tk.Button(root, text="Seleccionar archivo", command=on_file_button_click)
+    file_button = tk.Button(
+        root, text="Seleccionar archivo", command=on_file_button_click
+    )
 
     # Organización de widgets en la ventana
     label_port.pack()
@@ -70,6 +76,7 @@ def init_GUI():
 
     # Iniciar el bucle principal de la interfaz
     root.mainloop()
+
 
 def send_image(path):
     # Abre una imagen
@@ -92,7 +99,6 @@ def send_image(path):
 
 def main():
     init_GUI()
-    
 
 
 if __name__ == "__main__":
