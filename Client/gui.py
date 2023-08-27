@@ -9,13 +9,14 @@ root = tk.Tk()
 entry_font = ("Helvetica", 20)  
 entry1 = tk.Entry(root, font=entry_font)
 entry2 = tk.Entry(root, font=entry_font)
-_client = None
+_client = client.Client("", "")
 
 def on_button_click():
     port = entry1.get()
     ip = entry2.get()
     port = int(port)
-    _client = client.Client(ip, port)
+    _client.set_IP(ip)
+    _client.set_PORT(port)
     _client.connect()
 
 def on_file_button_click():
@@ -25,7 +26,7 @@ def on_file_button_click():
         time.sleep(2)
         print(_client.server_response())
         _client.disconnect()
-        
+
 # Botón de conectar
 button = tk.Button(root, text="Conectar", command=on_button_click, state=tk.DISABLED)
 def validate_entries():
