@@ -29,12 +29,12 @@ y_coordinate = (screen_height - window_height) // 2
 root.geometry(f"{window_width}x{window_height}+{x_coordinate}+{y_coordinate}")
 
 # Etiquetas con fuentes más grandes
-label_font = ("Helvetica", 20, "bold")  # Familia, tamaño, estilo
+label_font = ("Helvetica", 20, "bold")  
 label_port = tk.Label(root, text="PORT", fg="white", bg="black", font=label_font)
 label_ip = tk.Label(root, text="IP", fg="white", bg="black", font=label_font)
 
 # Campos de entrada de texto con fuentes más grandes
-entry_font = ("Helvetica", 20)  # Familia, tamaño
+entry_font = ("Helvetica", 20)  
 entry1 = tk.Entry(root, font=entry_font)
 entry2 = tk.Entry(root, font=entry_font)
 
