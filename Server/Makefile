@@ -1,3 +1,3 @@
 server: server.c
-	gcc server.c main.c -g main -pthread
+	gcc equalization.c server.c main.c -o main -pthread -lm
 	./main

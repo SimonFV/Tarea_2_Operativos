@@ -8,7 +8,9 @@ from tkinter import filedialog
 root = tk.Tk()
 entry_font = ("Helvetica", 20)
 entry1 = tk.Entry(root, font=entry_font)
+entry1.insert(0, "1717")
 entry2 = tk.Entry(root, font=entry_font)
+entry2.insert(0, "127.0.0.1")
 _client = client.Client("", "")
 
 
@@ -25,8 +27,6 @@ def on_file_button_click():
     file_path = filedialog.askopenfilename()
     if file_path:
         send_image(file_path)
-        time.sleep(2)
-        print(_client.server_response())
 
 
 # Botón de conectar
@@ -89,31 +89,32 @@ def send_image(path):
     # Envia el tamano de la imagen
     message = "start," + str(width) + "," + str(height)
     _client.send_msg(message)
-    time.sleep(3)
+    print(_client.wait_server_response())
 
     pixel_string = "pixels,"
 
     # Accede a los valores de los pixeles
     for y in range(height):
         for x in range(width):
-            pixel = pixeles[x, y]
-            if len(pixel_string) < 200:
+            if len(pixel_string) < 4060:
+                pixel = pixeles[x, y]
                 pixel_string += (
                     str(pixel[0]) + "," + str(pixel[1]) + "," + str(pixel[2]) + ","
                 )
-            elif (y == height-1 and x == width-1):
+            elif y == height - 1 and x == width - 1:
                 pixel_string = pixel_string[:-1]
                 _client.send_msg(pixel_string)
                 pixel_string = "pixels,"
+                print(_client.wait_server_response())
             else:
                 pixel_string = pixel_string[:-1]
                 _client.send_msg(pixel_string)
                 pixel_string = "pixels,"
-                time.sleep(1)
+                print(_client.wait_server_response())
             # Aquí puedes hacer lo que quieras con el valor del pixel, por ejemplo, imprimirlo
             # print(f"Pixel en ({x}, {y}): {pixel}")
-    time.sleep(1)
     _client.send_msg("end")
+    print(_client.wait_server_response())
 
 
 def main():

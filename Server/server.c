@@ -1,5 +1,10 @@
 #include "server.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image/stb_image_write.h"
+
 extern int socket_desc, client_sock, c;
 extern struct sockaddr_in server, client;
 extern pthread_mutex_t locker;
@@ -7,7 +12,7 @@ extern struct client *clients_arr[4];
 extern int current_client;
 extern int matrix_length;
 
-#define MSG_SIZE 256
+#define MSG_SIZE 4096
 
 // Metodo que inicializa todo el servidor
 void init_server(int PORT)
@@ -17,6 +22,9 @@ void init_server(int PORT)
 
     // Creacion del socket del servidor
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    int iSetOption = 1;
+    setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, (char *)&iSetOption, sizeof(iSetOption));
 
     // Maneja errores de creacion del socket
     if (socket_desc == -1)
@@ -104,7 +112,7 @@ void *connection_handler(void *socket_desc)
     if (read_size == 0)
     {
         puts("Cliente desconectado");
-        free(clients_arr[this_client]->image);
+        // free(clients_arr[this_client]->image);
         fflush(stdout);
     }
     else if (read_size == -1)
@@ -134,7 +142,7 @@ void handleMessage(char *msg, int sock, int client)
         clients_arr[client]->height = height;
 
         int size = width * height * 3;
-        clients_arr[client]->image = (int *)malloc(size * sizeof(int));
+        clients_arr[client]->image = malloc(size * sizeof(int));
         clients_arr[client]->index = 0;
 
         send_to("Size received", &sock);
@@ -147,13 +155,48 @@ void handleMessage(char *msg, int sock, int client)
             clients_arr[client]->image[clients_arr[client]->index++] = atoi(value);
             value = strtok(NULL, ",");
         }
+        send_to("Pixels received", &sock);
     }
     else if (strcmp(value, "end") == 0)
     {
         send_to("Image received", &sock);
-        // hacer algo
-        free(clients_arr[client]->image);
+
+        int size = clients_arr[client]->width * clients_arr[client]->height * 3;
+        unsigned char *result = malloc((size) * sizeof(unsigned char));
+        // equalize(clients_arr[client]->image, result, size);
+
+        for (int i = 0; i < size; i++)
+        {
+            result[i] = (unsigned char)clients_arr[client]->image[i];
+        }
+
+        stbi_write_jpg("jpg_test_.jpg",
+                       clients_arr[client]->width,
+                       clients_arr[client]->height,
+                       3,
+                       result,
+                       clients_arr[client]->width * 3);
+
+        // free(clients_arr[client]->image);
     }
+}
+
+void save_image(int w, int h, int channels_num)
+{
+    unsigned char data[w * h * channels_num];
+
+    int index = 0;
+    for (int j = h - 1; j >= 0; --j)
+    {
+        for (int i = 0; i < w; ++i)
+        {
+            data[index++] = (unsigned char)(255.0 * i / w);
+            data[index++] = (unsigned char)(255.0 * j / h);
+            data[index++] = (unsigned char)(255.0 * 0.2);
+        }
+    }
+
+    stbi_write_jpg("asd.jpg", w, h, channels_num, data, w * channels_num);
 }
 
 // Metodo para enviar un mensaje a todos los clientes conectados

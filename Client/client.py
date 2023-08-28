@@ -28,6 +28,13 @@ class Client:
     def set_PORT(self, port):
         self.server_port = port
 
-    def server_response(self):
-        data = self.client_socket.recv(1024)
-        return data.decode()
+    def wait_server_response(self):
+        data = ""
+
+        while True:
+            data_bytes = self.client_socket.recv(1024)
+            if data_bytes:
+                data += data_bytes.decode()
+                break
+
+        return data
