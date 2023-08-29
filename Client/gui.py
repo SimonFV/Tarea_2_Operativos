@@ -15,6 +15,9 @@ _client = client.Client("", "")
 
 
 def on_button_click():
+    """
+    _summary_ Action indicating that the connection to the server can be established.
+    """
     port = entry1.get()
     ip = entry2.get()
     port = int(port)
@@ -24,27 +27,33 @@ def on_button_click():
 
 
 def on_file_button_click():
+    """
+    _summary_ Used to select images from the file explorer
+    """
     file_path = filedialog.askopenfilename()
     if file_path:
         send_image(file_path)
 
 
-# Botón de conectar
+# Connect button
 button = tk.Button(root, text="Conectar", command=on_button_click, state=tk.NORMAL)
 
 
 def validate_entries():
     if entry1.get() and entry2.get():
-        button.config(state=tk.NORMAL)  # Activar el botón
+        button.config(state=tk.NORMAL)  # Activate the button
     else:
-        button.config(state=tk.NORMAL)  # Desactivar el botón
+        button.config(state=tk.NORMAL)  # Deactivate the button
 
 
 def init_GUI():
+    """
+    _summary_ Initialize all the GUI
+    """
     root.title("Interfaz")
     root.configure(bg="black")
 
-    # Establecer el tamaño de la ventana
+    # Set window size
     window_width = 500
     window_height = 500
     screen_width = root.winfo_screenwidth()
@@ -53,7 +62,7 @@ def init_GUI():
     y_coordinate = (screen_height - window_height) // 2
     root.geometry(f"{window_width}x{window_height}+{x_coordinate}+{y_coordinate}")
 
-    # Etiquetas con fuentes más grandes
+
     label_font = ("Helvetica", 20, "bold")
     label_port = tk.Label(root, text="PORT", fg="white", bg="black", font=label_font)
     label_ip = tk.Label(root, text="IP", fg="white", bg="black", font=label_font)
@@ -61,12 +70,12 @@ def init_GUI():
     entry1.bind("<KeyRelease>", lambda event: validate_entries())
     entry2.bind("<KeyRelease>", lambda event: validate_entries())
 
-    # Selector de archivos y botón
+    # File selector and button
     file_button = tk.Button(
         root, text="Seleccionar archivo", command=on_file_button_click
     )
 
-    # Organización de widgets en la ventana
+    # Organization of widgets in the window
     label_port.pack()
     entry1.pack()
     label_ip.pack()
@@ -74,27 +83,31 @@ def init_GUI():
     button.pack()
     file_button.pack()
 
-    # Iniciar el bucle principal de la interfaz
+    # Start the main loop of the interface
     root.mainloop()
 
 
 def send_image(path):
-    # Abre una imagen
+    """_summary_ Sends the image to the server
+
+    Args:
+        path (_type_): path of the selected image
+    """
+    
     image = Image.open(path)
-    # Obtiene los pixeles de la imagen
+    
     pixeles = image.load()
-    # Obtiene las dimensiones de la imagen
+    
     width, height = image.size
 
-    print(path.split("/")[-1])
-    # Envia el tamano de la imagen
+    # Send image size
     message = "start," + str(width) + "," + str(height) + "," + path.split("/")[-1]
     _client.send_msg(message)
     print(_client.wait_server_response())
 
     pixel_string = "pixels,"
 
-    # Accede a los valores de los pixeles
+    # Access the pixel values and send the values to the server
     for y in range(height):
         for x in range(width):
             pixel = pixeles[x, y]

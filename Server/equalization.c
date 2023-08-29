@@ -4,7 +4,7 @@ int equalize(int *pixels, unsigned char *result, int size)
 {
     int category = 0;
 
-    // Se extraen los pixeles de cada color
+    // The pixels of each color are extracted.
     int *red_pixels = malloc((size / 3) * sizeof(int));
     int *green_pixels = malloc((size / 3) * sizeof(int));
     int *blue_pixels = malloc((size / 3) * sizeof(int));
@@ -13,7 +13,7 @@ int equalize(int *pixels, unsigned char *result, int size)
     get_color(pixels, green_pixels, size / 3, 1);
     get_color(pixels, blue_pixels, size / 3, 2);
 
-    // Se suman los valores de cada color para clasificar la imagen
+    // The values of each color are summed to classify the image.
     category = categorizer(red_pixels, green_pixels, blue_pixels, size / 3);
 
     int red_frequency[256] = {0};
@@ -103,14 +103,14 @@ void get_cdf(int *frequency, int *result)
 
 void new_pixels(int *cdf, int *pixels, int *result, int size)
 {
-    // Normalizar la CDF al rango [0, 255]
+    // Normalize the CDF to the range [0, 255].
     float cdf_normalized[256];
     for (int i = 0; i < 256; i++)
     {
         cdf_normalized[i] = (float)cdf[i] * 255.0 / cdf[255];
     }
 
-    // Usar la CDF para ecualizar los valores de los píxeles
+    // Using the CDF to equalize pixel values
     for (int i = 0; i < size; i++)
     {
         result[i] = (int)cdf_normalized[pixels[i]];

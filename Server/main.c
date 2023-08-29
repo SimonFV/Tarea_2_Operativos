@@ -11,6 +11,12 @@ int matrix_length;
 int PORT;
 char DirColores[2048], DirHist[2048], DirLog[2048];
 
+
+/**
+ * @brief Reads the configuration file and gets its values
+ * 
+ * @return int 
+ */
 int read_config()
 {
     FILE *file_ptr;
@@ -32,21 +38,22 @@ int read_config()
         key = strtok(line_ptr, ":");
         char *value = strtok(NULL, "\n");
 
+        //Reads the port value
         if (strcmp(key, "Puerto") == 0)
         {
             PORT = atoi(value);
         }
-
+        //Reads the directory path of the images separated by colour
         else if (strcmp(key, "DirColores") == 0)
         {
             strcpy(DirColores, value);
         }
-
+        //Reads the directory path of the images equalized
         else if (strcmp(key, "DirHisto") == 0)
         {
             strcpy(DirHist, value);
         }
-
+        //Reads the directory path of log file
         else if (strcmp(key, "DirLog") == 0)
         {
             strcpy(DirLog, value);
@@ -59,6 +66,11 @@ int read_config()
     return 0;
 }
 
+/**
+ * @brief Main method
+ * 
+ * @return int 
+ */
 int main()
 {
     int result = read_config();
@@ -72,6 +84,7 @@ int main()
         mkdir(DirLog, 0700);
     strcat(DirLog, "server_log");
 
+    //log flags
     int nEnabledLevels = SLOG_INFO | SLOG_DEBUG | SLOG_ERROR | SLOG_WARN | SLOG_FATAL;
     slog_init(DirLog, nEnabledLevels, 1);
     slog_config_get(&cfg);
@@ -80,7 +93,7 @@ int main()
     cfg.nToScreen = 1;
     slog_config_set(&cfg);
 
-    // Se inicializa el server
+    // Initialize the server
     slog_info("Initializing server on PORT: %i", PORT);
     init_server(PORT);
 
