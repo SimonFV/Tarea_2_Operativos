@@ -1,5 +1,7 @@
 .vscode/*
 Client/__pycache__
 build
-main
 log
+ImageServer
+colores
+histo

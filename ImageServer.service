@@ -1,0 +1,15 @@
+[Unit]
+Description=ImageServer
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=3
+User=sfv
+ExecStart=/home/sfv/Documents/SistemasOperativos/Tarea_2_Operativos/Server/ImageServer
+WorkingDirectory=/home/sfv/Documents/SistemasOperativos/Tarea_2_Operativos/Server
+
+
+[Install]
+WantedBy=default.target
