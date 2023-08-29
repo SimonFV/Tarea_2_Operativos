@@ -1,3 +1,3 @@
 server: server.c
-	gcc equalization.c server.c main.c -o main -pthread -lm
+	gcc -fdiagnostics-color=always -g equalization.c server.c main.c -o ImageServer -pthread -lm -lslog
 	./main

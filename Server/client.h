@@ -7,6 +7,7 @@ struct client
     int width, height;
     int *image;
     int index;
+    char *file_name;
 };
 
 #endif // SERVER_CLIENT_H

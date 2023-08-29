@@ -1,14 +1,20 @@
 #include "equalization.h"
 
-void equalize(int *pixels, unsigned char *result, int size)
+int equalize(int *pixels, unsigned char *result, int size)
 {
+    int category = 0;
+
+    // Se extraen los pixeles de cada color
     int *red_pixels = malloc((size / 3) * sizeof(int));
     int *green_pixels = malloc((size / 3) * sizeof(int));
     int *blue_pixels = malloc((size / 3) * sizeof(int));
 
-    get_color(pixels, red_pixels, size, 0);
-    get_color(pixels, green_pixels, size, 1);
-    get_color(pixels, blue_pixels, size, 2);
+    get_color(pixels, red_pixels, size / 3, 0);
+    get_color(pixels, green_pixels, size / 3, 1);
+    get_color(pixels, blue_pixels, size / 3, 2);
+
+    // Se suman los valores de cada color para clasificar la imagen
+    category = categorizer(red_pixels, green_pixels, blue_pixels, size / 3);
 
     int red_frequency[256] = {0};
     int green_frequency[256] = {0};
@@ -34,26 +40,6 @@ void equalize(int *pixels, unsigned char *result, int size)
     new_pixels(green_cdf, green_pixels, new_green_pixels, size / 3);
     new_pixels(blue_cdf, blue_pixels, new_blue_pixels, size / 3);
 
-    /*
-    printf("pixels\n");
-    for (int i = 0; i < size / 3; i++)
-        printf("%i ", red_pixels[i]);
-
-    printf("\n\n frec\n");
-    for (int i = 0; i < 256; i++)
-        printf("%i ", red_frequency[i]);
-
-    printf("\n\n final\n");
-    for (int j = 0; j < size / 3; j++)
-    {
-        printf("%i ", new_red_pixels[j]);
-    }
-
-    printf("\n\n cdf\n");
-    for (int j = 0; j < 256; j++)
-    {
-        printf("%i ", red_cdf[j]);
-    }*/
     int index = 0;
     for (int i = 0; i < size / 3; i++)
     {
@@ -62,6 +48,7 @@ void equalize(int *pixels, unsigned char *result, int size)
         result[index++] = (unsigned char)new_blue_pixels[i];
     }
 
+    return category;
     /*
     free(red_pixels);
     free(green_pixels);
@@ -73,8 +60,32 @@ void equalize(int *pixels, unsigned char *result, int size)
 
 void get_color(int *pixels, int *result, int size, int mode)
 {
-    for (int i = mode; i < size; i += 3)
-        result[i] = pixels[i];
+    for (int i = 0; i < size; i++)
+    {
+        if (mode == 0)
+            result[i] = pixels[mode + i * 3];
+        else if (mode == 1)
+            result[i] = pixels[mode + i * 3];
+        else
+            result[i] = pixels[mode + i * 3];
+    }
+}
+
+int categorizer(int *red, int *green, int *blue, int size)
+{
+    int total_red, total_green, total_blue;
+    for (int i = 0; i < size; i++)
+    {
+        total_red += red[i];
+        total_green += green[i];
+        total_blue += blue[i];
+    }
+
+    if (total_red >= total_blue && total_red >= total_green)
+        return 0;
+    else if (total_green > total_blue)
+        return 1;
+    return 2;
 }
 
 void get_frequency(int *pixels, int *result, int size)
@@ -92,14 +103,6 @@ void get_cdf(int *frequency, int *result)
 
 void new_pixels(int *cdf, int *pixels, int *result, int size)
 {
-    /*
-    float div = 0.0f;
-    for (int i = 0; i < size; i++)
-    {
-        div = cdf[pixels[i]] / (float)cdf[255];
-        result[i] = (int)roundf((div)*255.0);
-    }*/
-
     // Normalizar la CDF al rango [0, 255]
     float cdf_normalized[256];
     for (int i = 0; i < 256; i++)

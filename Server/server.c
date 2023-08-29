@@ -14,6 +14,14 @@ extern int matrix_length;
 
 #define MSG_SIZE 4096
 
+struct args_struct
+{
+    void *client_sock;
+    char *DirColores;
+    char *DirHist;
+    char *DirLog;
+};
+
 // Metodo que inicializa todo el servidor
 void init_server(int PORT)
 {
@@ -23,7 +31,7 @@ void init_server(int PORT)
     // Creacion del socket del servidor
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
 
-    int iSetOption = 1;
+    char iSetOption = 1;
     setsockopt(socket_desc, SOL_SOCKET, SO_REUSEADDR, (char *)&iSetOption, sizeof(iSetOption));
 
     // Maneja errores de creacion del socket
@@ -55,7 +63,7 @@ void init_server(int PORT)
 }
 
 // Metodo para manejar al servidor en un thread
-void run()
+void run(char *DirColores, char *DirHist, char *DirLog)
 {
     pthread_t thread_id;
 
@@ -64,8 +72,14 @@ void run()
     {
         puts("Conexion aceptada");
 
+        struct args_struct *args = (struct args_struct *)malloc(sizeof(struct args_struct));
+        args->client_sock = (void *)&client_sock;
+        args->DirColores = DirColores;
+        args->DirHist = DirHist;
+        args->DirLog = DirLog;
+
         // Thread para cada conexion especifica
-        if (pthread_create(&thread_id, NULL, connection_handler, (void *)&client_sock) < 0)
+        if (pthread_create(&thread_id, NULL, connection_handler, (void *)args) < 0)
         {
             perror("No se pudo crear el thread ");
             return;
@@ -85,9 +99,9 @@ void run()
 }
 
 // Maneja cada conexion individualmente
-void *connection_handler(void *socket_desc)
+void *connection_handler(void *args)
 {
-    int sock = *(int *)socket_desc;
+    int sock = *(int *)(((struct args_struct *)args)->client_sock);
     int read_size;
     char message[50], client_message[MSG_SIZE];
 
@@ -103,7 +117,10 @@ void *connection_handler(void *socket_desc)
         // Analizar mensaje
         if (client_message != "")
         {
-            handleMessage(client_message, sock, this_client);
+            handleMessage(client_message, sock, this_client,
+                          ((struct args_struct *)args)->DirColores,
+                          ((struct args_struct *)args)->DirHist,
+                          ((struct args_struct *)args)->DirLog);
         }
 
         bzero(client_message, MSG_SIZE);
@@ -122,7 +139,7 @@ void *connection_handler(void *socket_desc)
 }
 
 // Analiza los mensajes entrantes del cliente
-void handleMessage(char *msg, int sock, int client)
+void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirHist, char *DirLog)
 {
     char buf[MSG_SIZE];
     strcpy(buf, msg);
@@ -134,12 +151,15 @@ void handleMessage(char *msg, int sock, int client)
     {
         int width = atoi(strtok(NULL, ","));
         int height = atoi(strtok(NULL, ","));
+        char *file_name = strtok(NULL, ",");
+        int len = sizeof(file_name) / sizeof(char);
 
-        printf("%i\n", width);
-        printf("%i\n", height);
+        printf("Size received: Width: %i, Height:%i\n", width, height);
 
         clients_arr[client]->width = width;
         clients_arr[client]->height = height;
+        clients_arr[client]->file_name = malloc(len * sizeof(char));
+        strcpy(clients_arr[client]->file_name, file_name);
 
         int size = width * height * 3;
         clients_arr[client]->image = malloc(size * sizeof(int));
@@ -155,7 +175,7 @@ void handleMessage(char *msg, int sock, int client)
             clients_arr[client]->image[clients_arr[client]->index++] = atoi(value);
             value = strtok(NULL, ",");
         }
-        send_to("Pixels received", &sock);
+        send_to("ok", &sock);
     }
     else if (strcmp(value, "end") == 0)
     {
@@ -163,40 +183,54 @@ void handleMessage(char *msg, int sock, int client)
 
         int size = clients_arr[client]->width * clients_arr[client]->height * 3;
         unsigned char *result = malloc((size) * sizeof(unsigned char));
-        // equalize(clients_arr[client]->image, result, size);
+        unsigned char *copy = malloc((size) * sizeof(unsigned char));
+
+        int category = equalize(clients_arr[client]->image, result, size);
 
         for (int i = 0; i < size; i++)
         {
-            result[i] = (unsigned char)clients_arr[client]->image[i];
+            copy[i] = (unsigned char)clients_arr[client]->image[i];
         }
 
-        stbi_write_jpg("jpg_test_.jpg",
+        struct stat st_ = {0};
+        char path_colors[2048];
+        strcpy(path_colors, DirColores);
+        if (stat(path_colors, &st_) == -1)
+            mkdir(path_colors, 0700);
+
+        if (category == 0)
+            strcat(path_colors, "rojas/");
+        else if (category == 1)
+            strcat(path_colors, "verdes/");
+        else
+            strcat(path_colors, "azules/");
+
+        if (stat(path_colors, &st_) == -1)
+            mkdir(path_colors, 0700);
+        strcat(path_colors, clients_arr[client]->file_name);
+
+        stbi_write_jpg(path_colors,
+                       clients_arr[client]->width,
+                       clients_arr[client]->height,
+                       3,
+                       copy,
+                       clients_arr[client]->width * 3);
+
+        char path_hist[2048];
+        strcpy(path_hist, DirHist);
+        strcat(path_hist, clients_arr[client]->file_name);
+        // Crear la carpeta para hist
+        struct stat st = {0};
+        if (stat(DirHist, &st) == -1)
+            mkdir(DirHist, 0700);
+
+        stbi_write_jpg(path_hist,
                        clients_arr[client]->width,
                        clients_arr[client]->height,
                        3,
                        result,
                        clients_arr[client]->width * 3);
-
-        // free(clients_arr[client]->image);
     }
-}
-
-void save_image(int w, int h, int channels_num)
-{
-    unsigned char data[w * h * channels_num];
-
-    int index = 0;
-    for (int j = h - 1; j >= 0; --j)
-    {
-        for (int i = 0; i < w; ++i)
-        {
-            data[index++] = (unsigned char)(255.0 * i / w);
-            data[index++] = (unsigned char)(255.0 * j / h);
-            data[index++] = (unsigned char)(255.0 * 0.2);
-        }
-    }
-
-    stbi_write_jpg("asd.jpg", w, h, channels_num, data, w * channels_num);
 }
 
 // Metodo para enviar un mensaje a todos los clientes conectados

@@ -65,10 +65,27 @@ int main()
     if (result == -1)
         return 0;
 
+    slog_config_t cfg;
+    // Directorio para log
+    struct stat st_ = {0};
+    if (stat(DirLog, &st_) == -1)
+        mkdir(DirLog, 0700);
+    strcat(DirLog, "server_log");
+
+    int nEnabledLevels = SLOG_INFO | SLOG_DEBUG | SLOG_ERROR | SLOG_WARN | SLOG_FATAL;
+    slog_init(DirLog, nEnabledLevels, 1);
+    slog_config_get(&cfg);
+
+    cfg.nToFile = 1;
+    cfg.nToScreen = 1;
+    slog_config_set(&cfg);
+
     // Se inicializa el server
+    slog_info("Initializing server on PORT: %i", PORT);
     init_server(PORT);
 
-    run();
+    slog_info("Running...");
+    run(DirColores, DirHist, DirLog);
 
     return 0;
 }

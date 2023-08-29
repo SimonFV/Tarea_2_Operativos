@@ -1,4 +1,5 @@
 .vscode/*
 Client/__pycache__
 build
-Server/main
+main
+log

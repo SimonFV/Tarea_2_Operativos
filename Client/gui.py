@@ -30,14 +30,14 @@ def on_file_button_click():
 
 
 # Botón de conectar
-button = tk.Button(root, text="Conectar", command=on_button_click, state=tk.DISABLED)
+button = tk.Button(root, text="Conectar", command=on_button_click, state=tk.NORMAL)
 
 
 def validate_entries():
     if entry1.get() and entry2.get():
         button.config(state=tk.NORMAL)  # Activar el botón
     else:
-        button.config(state=tk.DISABLED)  # Desactivar el botón
+        button.config(state=tk.NORMAL)  # Desactivar el botón
 
 
 def init_GUI():
@@ -86,8 +86,9 @@ def send_image(path):
     # Obtiene las dimensiones de la imagen
     width, height = image.size
 
+    print(path.split("/")[-1])
     # Envia el tamano de la imagen
-    message = "start," + str(width) + "," + str(height)
+    message = "start," + str(width) + "," + str(height) + "," + path.split("/")[-1]
     _client.send_msg(message)
     print(_client.wait_server_response())
 
@@ -96,23 +97,20 @@ def send_image(path):
     # Accede a los valores de los pixeles
     for y in range(height):
         for x in range(width):
-            if len(pixel_string) < 4060:
-                pixel = pixeles[x, y]
+            pixel = pixeles[x, y]
+            if type(pixel) in [list, tuple]:
                 pixel_string += (
                     str(pixel[0]) + "," + str(pixel[1]) + "," + str(pixel[2]) + ","
                 )
-            elif y == height - 1 and x == width - 1:
-                pixel_string = pixel_string[:-1]
-                _client.send_msg(pixel_string)
-                pixel_string = "pixels,"
-                print(_client.wait_server_response())
             else:
+                pixel_string += str(pixel) + "," + str(pixel) + "," + str(pixel) + ","
+
+            if len(pixel_string) > 4060 or (y == height - 1 and x == width - 1):
                 pixel_string = pixel_string[:-1]
                 _client.send_msg(pixel_string)
                 pixel_string = "pixels,"
-                print(_client.wait_server_response())
-            # Aquí puedes hacer lo que quieras con el valor del pixel, por ejemplo, imprimirlo
-            # print(f"Pixel en ({x}, {y}): {pixel}")
+                _client.wait_server_response()
+
     _client.send_msg("end")
     print(_client.wait_server_response())
 
