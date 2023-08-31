@@ -147,6 +147,8 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
     int i = 0;
     char *value = strtok(buf, ",");
 
+    printf("%s", msg);
+
     //Parse the incoming message
     if (strcmp(value, "start") == 0)
     {
