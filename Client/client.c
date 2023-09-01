@@ -58,7 +58,6 @@ int main(int argc, char *argv[]) {
         printf("Uso: %s <direccion_ip> <puerto>\n", argv[0]);
         return 1;
     }
-
     const char *ip = argv[1];
     int port = atoi(argv[2]);
     initClient((char*)ip, port);
