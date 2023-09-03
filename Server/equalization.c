@@ -73,17 +73,22 @@ void get_color(int *pixels, int *result, int size, int mode)
 
 int categorizer(int *red, int *green, int *blue, int size)
 {
-    int total_red, total_green, total_blue;
+    int total_red = 0;
+    int total_green = 0;
+    int total_blue = 0;
     for (int i = 0; i < size; i++)
     {
-        total_red += red[i];
-        total_green += green[i];
-        total_blue += blue[i];
+        if (red[i] >= blue[i] && red[i] >= green[i])
+            total_red += 1;
+        else if (green[i] >= blue[i] && green[i] >= red[i])
+            total_green += 1;
+        else
+            total_blue += 1;
     }
 
     if (total_red >= total_blue && total_red >= total_green)
         return 0;
-    else if (total_green > total_blue)
+    else if (total_green >= total_blue && total_green >= total_red)
         return 1;
     return 2;
 }

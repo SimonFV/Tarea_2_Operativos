@@ -23,7 +23,7 @@ struct args_struct
 };
 
 // Method that initializes the entire server
-void init_server(int PORT)
+int init_server(int PORT)
 {
     memset(clients_arr, 0, 4);
     current_client = 0;
@@ -37,9 +37,10 @@ void init_server(int PORT)
     // Handles socket creation errors
     if (socket_desc == -1)
     {
-        printf("No se pudo crear el socket");
+        slog_error("Could not create the socket.");
+        return -1;
     }
-    puts("Socket creado");
+    slog_info("Socket created.");
 
     // Sets socket addresses
     server.sin_family = AF_INET;
@@ -49,17 +50,18 @@ void init_server(int PORT)
     // Bind socket to desired port and address
     if (bind(socket_desc, (struct sockaddr *)&server, sizeof(server)) < 0)
     {
-        perror("Enlace fallido. Error");
-        return;
+        slog_error("Socket binding failed!");
+        return -1;
     }
-    puts("Enlace hecho");
+    slog_info("Socket binding complete.");
 
     // Listen for possible connections
     listen(socket_desc, 3);
 
     c = sizeof(struct sockaddr_in);
 
-    puts("Esperando conexiones entrantes...");
+    slog_info("Server is running: Waiting for connections...");
+    return 0;
 }
 
 // Method to manage the server in a thread
@@ -70,7 +72,7 @@ void run(char *DirColores, char *DirHist, char *DirLog)
     // Accept connections
     while ((client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c)))
     {
-        puts("Conexion aceptada");
+        slog_info("Connection of client accepted.");
 
         struct args_struct *args = (struct args_struct *)malloc(sizeof(struct args_struct));
         args->client_sock = (void *)&client_sock;
@@ -81,17 +83,17 @@ void run(char *DirColores, char *DirHist, char *DirLog)
         // Thread for each specific connection
         if (pthread_create(&thread_id, NULL, connection_handler, (void *)args) < 0)
         {
-            perror("No se pudo crear el thread ");
+            slog_error("Error while creating the thread for the new connection.");
             return;
         }
 
-        puts("Controlador asignado");
+        slog_info("Client connected. Controller assigned. Socket: %i", client_sock);
         current_client++;
     }
 
     if (client_sock < 0)
     {
-        perror("Aceptacion fallida");
+        slog_error("Failed to established connection!");
         return;
     }
 
@@ -117,10 +119,10 @@ void *connection_handler(void *args)
         // Analyze message
         if (client_message != "")
         {
-            handleMessage(client_message, sock, this_client,
-                          ((struct args_struct *)args)->DirColores,
-                          ((struct args_struct *)args)->DirHist,
-                          ((struct args_struct *)args)->DirLog);
+            handle_message(client_message, sock, this_client,
+                           ((struct args_struct *)args)->DirColores,
+                           ((struct args_struct *)args)->DirHist,
+                           ((struct args_struct *)args)->DirLog);
         }
 
         bzero(client_message, MSG_SIZE);
@@ -128,18 +130,18 @@ void *connection_handler(void *args)
 
     if (read_size == 0)
     {
-        puts("Cliente desconectado");
+        slog_info("Client disconnected. Socket: %i", sock);
         // free(clients_arr[this_client]->image);
         fflush(stdout);
     }
     else if (read_size == -1)
     {
-        perror("recv failed");
+        slog_error("Reading error, recv failed.");
     }
 }
 
 // Analyzes the client's incoming messages
-void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirHist, char *DirLog)
+void handle_message(char *msg, int sock, int client, char *DirColores, char *DirHist, char *DirLog)
 {
     char buf[MSG_SIZE];
     strcpy(buf, msg);
@@ -147,18 +149,16 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
     int i = 0;
     char *value = strtok(buf, ",");
 
-    printf("%s", msg);
-
-    //Parse the incoming message
+    // Parse the incoming message
     if (strcmp(value, "start") == 0)
     {
-        //gets the height and the width of the image and also its name
+        // gets the height and the width of the image and also its name
         int width = atoi(strtok(NULL, ","));
         int height = atoi(strtok(NULL, ","));
         char *file_name = strtok(NULL, ",");
         int len = sizeof(file_name) / sizeof(char);
 
-        printf("Size received: Width: %i, Height:%i\n", width, height);
+        slog_info("Size of image %s received: Width: %i, Height: %i\n", file_name, width, height);
 
         clients_arr[client]->width = width;
         clients_arr[client]->height = height;
@@ -173,7 +173,7 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
     }
     else if (strcmp(value, "pixels") == 0)
     {
-        //saves the image pixels
+        // saves the image pixels
         value = strtok(NULL, ",");
         while (value != NULL)
         {
@@ -184,12 +184,15 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
     }
     else if (strcmp(value, "end") == 0)
     {
+        slog_info("Image received successfuly. Processing...");
         send_to("Image received", &sock);
 
         int size = clients_arr[client]->width * clients_arr[client]->height * 3;
         unsigned char *result = malloc((size) * sizeof(unsigned char));
         unsigned char *copy = malloc((size) * sizeof(unsigned char));
-        //call the histogram equalization function
+        // call the histogram equalization function
+
+        slog_info("Equalizing: %s", clients_arr[client]->file_name);
         int category = equalize(clients_arr[client]->image, result, size);
 
         for (int i = 0; i < size; i++)
@@ -197,27 +200,36 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
             copy[i] = (unsigned char)clients_arr[client]->image[i];
         }
 
-        //create required directories for the colors
+        // create required directories for the colors
         struct stat st_ = {0};
         char path_colors[2048];
         strcpy(path_colors, DirColores);
         if (stat(path_colors, &st_) == -1)
             mkdir(path_colors, 0700);
 
-        //separates the image according to its category
+        // separates the image according to its category
         if (category == 0)
+        {
             strcat(path_colors, "rojas/");
+            slog_info("Image %s saved as red.", clients_arr[client]->file_name);
+        }
         else if (category == 1)
+        {
             strcat(path_colors, "verdes/");
+            slog_info("Image %s saved as green.", clients_arr[client]->file_name);
+        }
         else
+        {
             strcat(path_colors, "azules/");
+            slog_info("Image %s saved as blue.", clients_arr[client]->file_name);
+        }
 
-        //create required directories (red, green, blue)
+        // create required directories (red, green, blue)
         if (stat(path_colors, &st_) == -1)
             mkdir(path_colors, 0700);
         strcat(path_colors, clients_arr[client]->file_name);
 
-        //save the categorized image
+        // save the categorized image
         stbi_write_jpg(path_colors,
                        clients_arr[client]->width,
                        clients_arr[client]->height,
@@ -233,13 +245,15 @@ void handleMessage(char *msg, int sock, int client, char *DirColores, char *DirH
         if (stat(DirHist, &st) == -1)
             mkdir(DirHist, 0700);
 
-        //save the equalized image
+        // save the equalized image
         stbi_write_jpg(path_hist,
                        clients_arr[client]->width,
                        clients_arr[client]->height,
                        3,
                        result,
                        clients_arr[client]->width * 3);
+
+        slog_info("Image %s processed successfuly.", clients_arr[client]->file_name);
     }
 }
 
