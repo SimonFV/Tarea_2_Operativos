@@ -16,6 +16,12 @@ typedef struct
     size_t capacity;
 } FileSelection;
 
+typedef struct
+{
+    char *path;
+    int size;
+} FileSize;
+
 void initializeFileSelection(FileSelection *selection);
 void addPathToFileSelection(FileSelection *selection, const char *path);
 void freeFileSelection(FileSelection *selection);
@@ -23,5 +29,8 @@ void listFilesInDirectory(const char *directory);
 int send_images(FileSelection selection, int sockfd);
 int wait_response(int sockfd, char *response);
 int menu(int sockfd);
+int sort(FileSelection *selection);
+void swap(FileSize *a, FileSize *b);
+void bubble_sort(FileSize *filesizes, int n);
 
 #endif // SERVER_CLIENT_H

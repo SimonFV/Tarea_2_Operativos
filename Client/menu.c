@@ -91,6 +91,70 @@ int wait_response(int sockfd, char *response)
     return 0;
 }
 
+int sort(FileSelection *selection)
+{
+    FileSize *filesizes = malloc(selection->count * sizeof(FileSize));
+
+    int width, height, channels;
+    for (size_t i = 0; i < selection->count; i++)
+    {
+        unsigned char *image = stbi_load(selection->paths[i], &width, &height, &channels, 0);
+        if (image == NULL)
+        {
+            printf("Error in loading the image\n");
+            return -1;
+        }
+        filesizes[i].path = malloc(strlen(selection->paths[i]) * sizeof(char *));
+        strcpy(filesizes[i].path, selection->paths[i]);
+        filesizes[i].size = width * height;
+    }
+
+    bubble_sort(filesizes, selection->count);
+
+    for (int i = 0; i < selection->count; i++)
+    {
+        free(selection->paths[i]);
+        selection->paths[i] = malloc(strlen(filesizes[i].path) * sizeof(char));
+        strcpy(selection->paths[i], filesizes[i].path);
+    }
+
+    for (int i = 0; i < selection->count; i++)
+    {
+        free(filesizes[i].path);
+    }
+    free(filesizes);
+
+    return 0;
+}
+
+void swap(FileSize *a, FileSize *b)
+{
+    FileSize temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+void bubble_sort(FileSize *filesizes, int n)
+{
+    int swapped;
+    for (int i = 0; i < n - 1; i++)
+    {
+        swapped = 0;
+        for (int j = 0; j < n - i - 1; j++)
+        {
+            if ((filesizes[j + 1].size - filesizes[j].size) < 0)
+            {
+                swap(&filesizes[j], &filesizes[j + 1]);
+                swapped = 1;
+            }
+        }
+        if (swapped == 0)
+        {
+            break;
+        }
+    }
+}
+
 int send_images(FileSelection selection, int sockfd)
 {
     char message[4096]; // Buffer para almacenar el mensaje
@@ -259,6 +323,9 @@ int menu(int sockfd)
         case 5:
             system("clear");
             printf("Enviando archivos...\n");
+            if (sort(&selection) != 0)
+                return 0;
+
             if (send_images(selection, sockfd) != 0)
                 return 0;
             break;
