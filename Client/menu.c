@@ -4,7 +4,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image/stb_image.h"
 
-// Inicializa la estructura FileSelection
 void initializeFileSelection(FileSelection *selection)
 {
     selection->paths = NULL;
@@ -12,7 +11,7 @@ void initializeFileSelection(FileSelection *selection)
     selection->capacity = 0;
 }
 
-// Agrega una ruta al vector de rutas en FileSelection
+
 void addPathToFileSelection(FileSelection *selection, const char *path)
 {
     if (selection->count >= selection->capacity)
@@ -23,7 +22,7 @@ void addPathToFileSelection(FileSelection *selection, const char *path)
     selection->paths[selection->count++] = strdup(path);
 }
 
-// Libera la memoria utilizada por FileSelection
+
 void freeFileSelection(FileSelection *selection)
 {
     for (size_t i = 0; i < selection->count; i++)
@@ -36,7 +35,7 @@ void freeFileSelection(FileSelection *selection)
     selection->capacity = 0;
 }
 
-// Función para listar archivos en el directorio actual
+
 void listFilesInDirectory(const char *directory)
 {
     DIR *dir;
