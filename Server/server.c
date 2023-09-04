@@ -131,7 +131,6 @@ void *connection_handler(void *args)
     if (read_size == 0)
     {
         slog_info("Client disconnected. Socket: %i", sock);
-        // free(clients_arr[this_client]->image);
         fflush(stdout);
     }
     else if (read_size == -1)

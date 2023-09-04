@@ -1,0 +1,10 @@
+systemd
+sudo systemctl start ImageServer
+sudo systemctl restart ImageServer
+sudo systemctl stop ImageServer
+sudo systemctl status ImageServer
+
+
+ip r
+
+sudo docker start -i ubuntu_client

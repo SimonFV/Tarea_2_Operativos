@@ -49,13 +49,6 @@ int equalize(int *pixels, unsigned char *result, int size)
     }
 
     return category;
-    /*
-    free(red_pixels);
-    free(green_pixels);
-    free(blue_pixels);
-    free(new_red_pixels);
-    free(new_green_pixels);
-    free(new_blue_pixels);*/
 }
 
 void get_color(int *pixels, int *result, int size, int mode)
